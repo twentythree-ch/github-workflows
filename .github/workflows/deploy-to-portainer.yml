@@ -1,0 +1,251 @@
+name: Deploy to Portainer (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      stack_name:
+        required: true
+        type: string
+        description: 'Base name for the stack (will be suffixed with -dev or -prod)'
+      
+      compose_file:
+        required: false
+        type: string
+        default: 'docker-compose.yml'
+        description: 'Path to docker-compose file relative to repository root'
+      
+      environment:
+        required: false
+        type: string
+        default: 'auto'
+        description: 'Environment: dev, prod, or auto (auto-detect from branch)'
+      
+      branch_dev:
+        required: false
+        type: string
+        default: 'develop'
+        description: 'Branch name for DEV environment'
+      
+      branch_prod:
+        required: false
+        type: string
+        default: 'main'
+        description: 'Branch name for PROD environment'
+    
+    secrets:
+      portainer_url:
+        required: true
+        description: 'Portainer URL (e.g., https://portainer.yourdomain.com)'
+      
+      portainer_token:
+        required: true
+        description: 'Portainer API token'
+      
+      portainer_endpoint_id:
+        required: true
+        description: 'Portainer endpoint ID (usually 1)'
+      
+      env_vars_dev:
+        required: false
+        description: 'JSON array of environment variables for DEV'
+      
+      env_vars_prod:
+        required: false
+        description: 'JSON array of environment variables for PROD'
+    
+    outputs:
+      stack_name:
+        description: 'Full stack name that was deployed'
+        value: ${{ jobs.deploy.outputs.stack_name }}
+      
+      environment:
+        description: 'Environment that was deployed to'
+        value: ${{ jobs.deploy.outputs.environment }}
+      
+      deployment_url:
+        description: 'URL to view the stack in Portainer'
+        value: ${{ jobs.deploy.outputs.deployment_url }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      stack_name: ${{ steps.env.outputs.stack_name }}
+      environment: ${{ steps.env.outputs.environment }}
+      deployment_url: ${{ steps.env.outputs.deployment_url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Determine environment
+        id: env
+        run: |
+          # Determine environment from input or branch
+          if [ "${{ inputs.environment }}" != "auto" ]; then
+            ENV="${{ inputs.environment }}"
+            BRANCH="${GITHUB_REF#refs/heads/}"
+          elif [ "${{ github.ref }}" == "refs/heads/${{ inputs.branch_prod }}" ]; then
+            ENV="prod"
+            BRANCH="${{ inputs.branch_prod }}"
+          elif [ "${{ github.ref }}" == "refs/heads/${{ inputs.branch_dev }}" ]; then
+            ENV="dev"
+            BRANCH="${{ inputs.branch_dev }}"
+          else
+            echo "❌ Unknown branch: ${{ github.ref }}"
+            echo "Expected: refs/heads/${{ inputs.branch_dev }} or refs/heads/${{ inputs.branch_prod }}"
+            exit 1
+          fi
+          
+          STACK_NAME="${{ inputs.stack_name }}-${ENV}"
+          
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "deployment_url=${{ secrets.portainer_url }}/#/stacks" >> $GITHUB_OUTPUT
+          
+          echo "🚀 Deploying to: $ENV"
+          echo "📦 Stack name: $STACK_NAME"
+          echo "🌿 Branch: $BRANCH"
+
+      - name: Prepare environment variables
+        id: prepare-env
+        run: |
+          ENV=${{ steps.env.outputs.environment }}
+          
+          if [ "$ENV" == "prod" ]; then
+            ENV_VARS='${{ secrets.env_vars_prod }}'
+          else
+            ENV_VARS='${{ secrets.env_vars_dev }}'
+          fi
+          
+          # Handle empty or missing env vars
+          if [ -z "$ENV_VARS" ] || [ "$ENV_VARS" == "null" ]; then
+            ENV_VARS='[]'
+          fi
+          
+          echo "env_vars=$ENV_VARS" >> $GITHUB_OUTPUT
+
+      - name: Check if stack exists
+        id: check-stack
+        run: |
+          echo "🔍 Checking if stack '${{ steps.env.outputs.stack_name }}' exists..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+            "${{ secrets.portainer_url }}/api/stacks" \
+            -H "X-API-Key: ${{ secrets.portainer_token }}")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "❌ Failed to query Portainer API (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+          
+          STACK_ID=$(echo "$BODY" | jq -r '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | .Id')
+          
+          if [ -z "$STACK_ID" ] || [ "$STACK_ID" == "null" ]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "📝 Stack does not exist, will create new stack"
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "stack_id=$STACK_ID" >> $GITHUB_OUTPUT
+            echo "♻️  Stack exists with ID: $STACK_ID, will update"
+          fi
+
+      - name: Create new stack
+        if: steps.check-stack.outputs.exists == 'false'
+        run: |
+          echo "📦 Creating new stack: ${{ steps.env.outputs.stack_name }}"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ secrets.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ secrets.portainer_endpoint_id }}" \
+            -H "X-API-Key: ${{ secrets.portainer_token }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"name\": \"${{ steps.env.outputs.stack_name }}\",
+              \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
+              \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
+              \"composeFile\": \"${{ inputs.compose_file }}\",
+              \"env\": ${{ steps.prepare-env.outputs.env_vars }},
+              \"repositoryAuthentication\": false
+            }")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Stack created successfully"
+            echo "$BODY" | jq . || echo "$BODY"
+          else
+            echo "❌ Failed to create stack (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+
+      - name: Update existing stack
+        if: steps.check-stack.outputs.exists == 'true'
+        run: |
+          echo "♻️  Updating stack: ${{ steps.env.outputs.stack_name }} (ID: ${{ steps.check-stack.outputs.stack_id }})"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
+            "${{ secrets.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ secrets.portainer_endpoint_id }}" \
+            -H "X-API-Key: ${{ secrets.portainer_token }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
+              \"env\": ${{ steps.prepare-env.outputs.env_vars }},
+              \"prune\": true,
+              \"pullImage\": true
+            }")
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Stack updated successfully"
+            echo "$BODY" | jq . || echo "$BODY"
+          else
+            echo "❌ Failed to update stack (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting 10 seconds for deployment to stabilize..."
+          sleep 10
+
+      - name: Verify deployment
+        run: |
+          echo "📊 Deployment Summary:"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "  Environment:  ${{ steps.env.outputs.environment }}"
+          echo "  Stack:        ${{ steps.env.outputs.stack_name }}"
+          echo "  Branch:       ${{ steps.env.outputs.branch }}"
+          echo "  Compose:      ${{ inputs.compose_file }}"
+          echo "  Commit:       ${{ github.sha }}"
+          echo "  Repository:   ${{ github.repository }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          # Get stack details
+          curl -s -X GET \
+            "${{ secrets.portainer_url }}/api/stacks" \
+            -H "X-API-Key: ${{ secrets.portainer_token }}" \
+            | jq '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
+
+      - name: Deployment result
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment to ${{ steps.env.outputs.environment }} succeeded!"
+            echo ""
+            echo "🔗 View in Portainer: ${{ secrets.portainer_url }}/#/stacks"
+          else
+            echo "❌ Deployment to ${{ steps.env.outputs.environment }} failed!"
+            echo ""
+            echo "Check logs above for details"
+            exit 1
+          fi
