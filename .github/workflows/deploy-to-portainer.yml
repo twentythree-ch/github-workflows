@@ -90,6 +90,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Debug secrets
+        run: |
+          echo "Client ID length: ${#CF_ACCESS_CLIENT_ID}"
+          echo "Client Secret length: ${#CF_ACCESS_CLIENT_SECRET}"
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
+
       - name: Setup Cloudflare Tunnel
         id: setup-cloudflared
         run: |
@@ -100,8 +108,8 @@ jobs:
       - name: Access Portainer via Cloudflare Access
         id: access-portainer-through-cloudflared
         env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
         run: |
           cloudflared access curl \
             https://portainer-dev.twentythree.ch/api/stacks \
