@@ -91,18 +91,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Cloudflare Tunnel
-        id: cloudflare
+        id: setup-cloudflared
         run: |
-          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
           chmod +x cloudflared-linux-amd64
+          sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
 
-      - name: Access Portainer
-        id: cloudflared2
+      - name: Access Portainer via Cloudflare Access
+        id: access-portainer-through-cloudflared
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
         run: |
-          ./cloudflared-linux-amd64 access curl \
-            --hostname portainer-dev.twentythree.ch \
-            --service-token-id ${{ secrets.CF_CLIENT_ID }} \
-            --service-token-secret ${{ secrets.CF_CLIENT_SECRET }} \
+          cloudflared access curl \
             https://portainer-dev.twentythree.ch/api/stacks
 
       - name: Determine environment
