@@ -104,6 +104,7 @@ jobs:
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_CLIENT_SECRET }}
         run: |
           cloudflared access curl \
+            -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY }}" \
             https://portainer-dev.twentythree.ch/api/stacks
 
       - name: Determine environment
