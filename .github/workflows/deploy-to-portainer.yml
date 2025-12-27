@@ -145,7 +145,7 @@ jobs:
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
-            -H "X-GitHub-Secret: ${{ secrets.github_secret }}" \
+            -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
             -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}")
@@ -177,7 +177,7 @@ jobs:
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "${{ secrets.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ secrets.portainer_endpoint_id }}" \
-            -H "X-GitHub-Secret: ${{ secrets.github_secret }}" \
+            -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \ \
             -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
@@ -210,7 +210,7 @@ jobs:
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
             "${{ secrets.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ secrets.portainer_endpoint_id }}" \
-            -H "X-GitHub-Secret: ${{ secrets.github_secret }}" \
+            -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \ \
             -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
@@ -254,7 +254,7 @@ jobs:
           # Get stack details
           curl -s -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
-            -H "X-GitHub-Secret: ${{ secrets.github_secret }}" \
+            -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \ \
             -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
             -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
