@@ -96,6 +96,14 @@ jobs:
           wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
           chmod +x cloudflared-linux-amd64
 
+      - name: Access Portainer
+        run: |
+          ./cloudflared-linux-amd64 access curl \
+            --hostname portainer-dev.twentythree.ch \
+            --service-token-id ${{ secrets.CF_CLIENT_ID }} \
+            --service-token-secret ${{ secrets.CF_CLIENT_SECRET }} \
+            https://portainer-dev.twentythree.ch/api/stacks
+
       - name: Determine environment
         id: env
         run: |
@@ -149,7 +157,7 @@ jobs:
         run: |
           echo "🔍 Checking if stack '${{ steps.env.outputs.stack_name }}' exists..."
           
-          RESPONSE=$(./cloudflared-linux-amd64 access curl -s -w "\n%{http_code}" -X GET \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
             -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
