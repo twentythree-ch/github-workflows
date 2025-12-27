@@ -45,6 +45,14 @@ on:
         required: true
         description: 'Portainer endpoint ID (usually 1)'
       
+      cloudflare_client_id:
+        required: true
+        description: 'Cloudflare Client Id'
+
+      cloudflare_client_secret:
+        required: true
+        description: 'Cloudflare Client Secret'
+
       env_vars_dev:
         required: false
         description: 'JSON array of environment variables for DEV'
@@ -134,8 +142,8 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_CLIENT_SECRET }}")
+            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -166,8 +174,8 @@ jobs:
             "${{ secrets.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ secrets.portainer_endpoint_id }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_CLIENT_SECRET }}" \
+            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
             -d "{
               \"name\": \"${{ steps.env.outputs.stack_name }}\",
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
@@ -198,8 +206,8 @@ jobs:
             "${{ secrets.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ secrets.portainer_endpoint_id }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_CLIENT_SECRET }}" \
+            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
             -d "{
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"env\": ${{ steps.prepare-env.outputs.env_vars }},
@@ -240,8 +248,8 @@ jobs:
           curl -s -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.CF_CLIENT_ID }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.CF_CLIENT_SECRET }}" \
+            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
+            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
             | jq '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
 
       - name: Deployment result
