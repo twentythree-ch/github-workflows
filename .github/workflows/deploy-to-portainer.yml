@@ -97,6 +97,7 @@ jobs:
           chmod +x cloudflared-linux-amd64
 
       - name: Access Portainer
+        id: cloudflared2
         run: |
           ./cloudflared-linux-amd64 access curl \
             --hostname portainer-dev.twentythree.ch \
