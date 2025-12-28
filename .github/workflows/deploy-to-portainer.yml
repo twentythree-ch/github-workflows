@@ -53,6 +53,10 @@ on:
         required: true
         description: 'Cloudflare Client Secret'
 
+      netbird_setup_key:
+        required: true
+        description: 'Netbord setup key to connect to netbird'
+
       github_secret:
         required: true
         description: 'Secret to bypass cloudflare bot protection'
@@ -94,9 +98,19 @@ jobs:
         run: |
           echo "Client ID length: ${#CF_ACCESS_CLIENT_ID}"
           echo "Client Secret length: ${#CF_ACCESS_CLIENT_SECRET}"
+          echo "Netbord Setup Key length: ${#NETBIRD_SETUP_KEY}"
         env:
           CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
+          NETBIRD_SETUP_KEY: ${{ secrets.netbird_setup_key }}
+
+
+      - name: Netbird Connect
+        id: netbird
+        uses: Alemiz112/netbird-connect@v1
+        with:
+          setup-key: ${{ secrets.netbird_setup_key }}
+          hostname: 'github-action-runner'
 
       - name: Setup Cloudflare Tunnel
         id: setup-cloudflared
