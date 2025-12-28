@@ -109,9 +109,9 @@ jobs:
         id: access-portainer-through-cloudflared
         run: |
           cloudflared access curl \
+            --service-token-id "${{ secrets.cloudflare_client_id }}" \
+            --service-token-secret "${{ secrets.cloudflare_client_secret }}" \
             https://portainer-api-dev.twentythree.ch/api/stacks \
-            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
             -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY }}" 
 
       - name: Determine environment
