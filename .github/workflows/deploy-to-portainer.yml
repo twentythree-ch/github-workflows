@@ -117,10 +117,10 @@ jobs:
       - name: Network test
         id: network-test
         run: | 
-          nslookup portainer.twentythree.ch
-          ping portainer.twentythree.ch
-          ping 192.168.11.2
-          tracert 192.168.11.2
+          nslookup portainer.twentythree.ch || true
+          ping -c 4 portainer.twentythree.ch || true
+          ping -c 4 192.168.11.2 || true
+          traceroute 192.168.11.2 || true
 
       # - name: Setup Cloudflare Tunnel
       #   id: setup-cloudflared
