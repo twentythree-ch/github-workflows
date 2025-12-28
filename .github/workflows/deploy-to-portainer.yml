@@ -107,12 +107,16 @@ jobs:
 
       - name: Access Portainer via Cloudflare Access
         id: access-portainer-through-cloudflared
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
+          PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
         run: |
           cloudflared access curl \
-            --service-token-id "${{ secrets.cloudflare_client_id }}" \
-            --service-token-secret "${{ secrets.cloudflare_client_secret }}" \
+            --service-token-id "$CF_ACCESS_CLIENT_ID" \
+            --service-token-secret "$CF_ACCESS_CLIENT_SECRET" \
             https://portainer-api-dev.twentythree.ch/api/stacks \
-            -H "X-API-Key: ${{ secrets.PORTAINER_API_KEY }}" 
+            -H "X-API-Key: $PORTAINER_API_KEY"
 
       - name: Determine environment
         id: env
