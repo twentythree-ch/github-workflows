@@ -117,19 +117,22 @@ jobs:
       - name: Network test
         id: network-test
         run: | 
-          echo "=== Running nslookup ==="
-          nslookup portainer.twentythree.ch || echo "nslookup failed with exit code $?"
-          
-          echo "=== Running ping to hostname ==="
-          ping -c 4 portainer.twentythree.ch || echo "ping to hostname failed with exit code $?"
-          
-          echo "=== Running ping to IP ==="
-          ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
-          
-          echo "=== Running traceroute ==="
-          traceroute 192.168.11.2 || echo "traceroute failed with exit code $?"
-          
-          echo "=== Network test completed ==="
+            echo "=== Adding entry to hosts file ==="
+            echo "192.168.11.2 portainer.twentythree.ch" | sudo tee -a /etc/hosts
+            
+            echo "=== Verifying hosts file entry ==="
+            grep portainer.twentythree.ch /etc/hosts || echo "Entry not found in hosts file"
+            
+            echo "=== Running nslookup ==="
+            nslookup portainer.twentythree.ch || echo "nslookup failed with exit code $?"
+            
+            echo "=== Running ping to hostname ==="
+            ping -c 4 portainer.twentythree.ch || echo "ping to hostname failed with exit code $?"
+            
+            echo "=== Running ping to IP ==="
+            ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
+            
+            echo "=== Network test completed ==="
 
       # - name: Setup Cloudflare Tunnel
       #   id: setup-cloudflared
