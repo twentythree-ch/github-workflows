@@ -88,10 +88,12 @@ jobs:
           echo "Portainer token length: ${#PORTAINER_API_KEY}"
           echo "Netbird Setup Key length: ${#NETBIRD_SETUP_KEY}"
           echo "GitHub Token length: ${#GITHUB_TOKEN}"
+          echo "Env Vars length: ${#ENV_VARS}"
         env:
           GITHUB_TOKEN: ${{ secrets.gh_token }}
           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
           NETBIRD_SETUP_KEY: ${{ secrets.netbird_setup_key }}
+          ENV_VARS: ${{ secrets.env_vars }}
 
 
       - name: Netbird Connect
