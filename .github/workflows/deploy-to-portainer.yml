@@ -49,7 +49,7 @@ on:
 
       netbird_setup_key:
         required: true
-        description: 'Netbord setup key to connect to netbird'
+        description: 'Netbird setup key to connect to netbird'
         
       env_vars_dev:
         required: false
