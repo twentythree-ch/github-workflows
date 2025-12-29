@@ -208,7 +208,7 @@ jobs:
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"composeFile\": \"${{ inputs.compose_file }}\",
-              \"env\": ${{ steps.prepare-env.outputs.env_vars }},
+              \"env\": ${{ secrets.env_vars }},
               \"repositoryAuthentication\": true,
               \"repositoryUsername\": \"${{ inputs.gh_username }}\",
               \"repositoryPassword\": \"${{ secrets.gh_token }}\"
