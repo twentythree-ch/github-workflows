@@ -31,19 +31,21 @@ on:
         type: string
         default: 'main'
         description: 'Branch name for PROD environment'
-    
-    secrets:
+
       portainer_url:
         required: true
+        type: string
         description: 'Portainer URL (e.g., https://portainer.yourdomain.com)'
-      
-      portainer_token:
-        required: true
-        description: 'Portainer API token'
-      
+    
       portainer_endpoint_id:
         required: true
+        type: string
         description: 'Portainer endpoint ID (usually 1)'
+
+    secrets:
+      portainer_token:
+        required: true
+        description: 'Portainer API token' 
 
       netbird_setup_key:
         required: true
@@ -101,6 +103,7 @@ jobs:
         with:
           setup-key: ${{ secrets.netbird_setup_key }}
           hostname: 'github-action-runner'
+          management-url: 'https://api.netbird.io'
 
       - name: Network test
         id: network-test
@@ -121,26 +124,6 @@ jobs:
             ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
             
             echo "=== Network test completed ==="
-
-      # - name: Setup Cloudflare Tunnel
-      #   id: setup-cloudflared
-      #   run: |
-      #     wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-      #     chmod +x cloudflared-linux-amd64
-      #     sudo mv cloudflared-linux-amd64 /usr/local/bin/cloudflared
-
-      # - name: Access Portainer via Cloudflare Access
-      #   id: access-portainer-through-cloudflared
-      #   env:
-      #     CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
-      #     CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
-      #     PORTAINER_API_KEY: ${{ secrets.portainer_token }}
-      #   run: |
-      #     cloudflared access curl \
-      #       https://portainer-api-dev.twentythree.ch/api/stacks \
-      #       --service-token-id "$CF_ACCESS_CLIENT_ID" \
-      #       --service-token-secret "$CF_ACCESS_CLIENT_SECRET" \
-      #       -H "X-API-Key: $PORTAINER_API_KEY"
 
       - name: Determine environment
         id: env
