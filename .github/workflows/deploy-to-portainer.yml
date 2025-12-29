@@ -15,10 +15,10 @@ on:
         description: 'Path to docker-compose file relative to repository root'
       
       environment:
-        required: false
         type: string
-        default: 'auto'
-        description: 'Environment: dev, prod, or auto (auto-detect from branch)'
+        description: 'Which environment to run this on (development or production).'
+        required: true
+        default: 'development'
       
       branch_dev:
         required: false
@@ -86,6 +86,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     outputs:
       stack_name: ${{ steps.env.outputs.stack_name }}
       environment: ${{ steps.env.outputs.environment }}
