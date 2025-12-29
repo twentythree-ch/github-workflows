@@ -19,18 +19,6 @@ on:
         description: 'Which environment to run this on (development or production).'
         required: true
         default: 'development'
-      
-      branch_dev:
-        required: false
-        type: string
-        default: 'develop'
-        description: 'Branch name for DEV environment'
-      
-      branch_prod:
-        required: false
-        type: string
-        default: 'main'
-        description: 'Branch name for PROD environment'
 
       portainer_url:
         required: true
@@ -117,15 +105,6 @@ jobs:
           hostname: 'github-action-runner'
           management-url: 'https://api.netbird.io'
 
-    #   - name: Configure DNS
-    #     if: steps.netbird.outputs.status == 'connected'
-    #     run: |
-    #       echo "=== Netbird connected, configuring DNS ==="
-    #       sudo resolvectl dns github-action-runner
-
-    #       PORTAINER_HOST=$(echo "${{ inputs.portainer_url }}" | awk -F[/:] '{print $4}')
-    #       echo "Portainer Host: $PORTAINER_HOST"
-
       - name: Network test
         id: network-test
         if: inputs.run_network_test == true
@@ -156,36 +135,22 @@ jobs:
         id: env
         run: |
           # Determine environment from input or branch
-          if [ "${{ inputs.environment }}" != "auto" ]; then
-            ENV="${{ inputs.environment }}"
-            BRANCH="${GITHUB_REF#refs/heads/}"
-          elif [ "${{ github.ref }}" == "refs/heads/${{ inputs.branch_prod }}" ]; then
-            ENV="prod"
-            BRANCH="${{ inputs.branch_prod }}"
-          elif [ "${{ github.ref }}" == "refs/heads/${{ inputs.branch_dev }}" ]; then
-            ENV="dev"
-            BRANCH="${{ inputs.branch_dev }}"
-          else
-            echo "❌ Unknown branch: ${{ github.ref }}"
-            echo "Expected: refs/heads/${{ inputs.branch_dev }} or refs/heads/${{ inputs.branch_prod }}"
-            exit 1
-          fi
-          
+          ENV="${{ inputs.environment }}"
+         
           STACK_NAME="${{ inputs.stack_name }}-${ENV}"
-          
-          echo "environment=$ENV" >> $GITHUB_OUTPUT
           echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+         
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
           echo "deployment_url=${{ inputs.portainer_url }}/#/stacks" >> $GITHUB_OUTPUT
           
           echo "🚀 Deploying to: $ENV"
           echo "📦 Stack name: $STACK_NAME"
-          echo "🌿 Branch: $BRANCH"
 
       - name: Prepare environment variables
         id: prepare-env
         run: |
-          ENV=${{ steps.env.outputs.environment }}
           ENV_VARS='${{ secrets.env_vars }}'  
           
           # Handle empty or missing env vars
