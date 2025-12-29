@@ -123,6 +123,9 @@ jobs:
             echo "=== Running ping to IP ==="
             ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
             
+            echo "=== Running curl to Portainer URL ==="
+            curl -v https://portainer.twentythree.ch || echo "curl failed with exit code $?"
+
             echo "=== Network test completed ==="
 
       - name: Determine environment
