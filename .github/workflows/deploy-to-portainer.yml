@@ -136,6 +136,9 @@ jobs:
           # Determine environment from input or branch
           ENV="${{ inputs.environment }}"
          
+          # Get current branch name
+          BRANCH=${GITHUB_REF##*/}
+
           STACK_NAME="${{ inputs.stack_name }}-${ENV}"
           echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
 
@@ -146,6 +149,7 @@ jobs:
           
           echo "🚀 Deploying to: $ENV"
           echo "📦 Stack name: $STACK_NAME"
+          echo "🌿 Branch: $BRANCH"
 
       - name: Prepare environment variables
         id: prepare-env
