@@ -113,11 +113,11 @@ jobs:
             PORTAINER_HOST=$(echo "${{ inputs.portainer_url }}" | awk -F[/:] '{print $4}')
             echo "Portainer Host: $PORTAINER_HOST"
 
-            echo "=== Adding entry to hosts file ==="
-            echo "192.168.11.2  $PORTAINER_HOST" | sudo tee -a /etc/hosts
+            # echo "=== Adding entry to hosts file ==="
+            # echo "192.168.11.2  $PORTAINER_HOST" | sudo tee -a /etc/hosts
             
-            echo "=== Verifying hosts file entry ==="
-            grep $PORTAINER_HOST /etc/hosts || echo "Entry not found in hosts file"
+            # echo "=== Verifying hosts file entry ==="
+            # grep $PORTAINER_HOST /etc/hosts || echo "Entry not found in hosts file"
             
             echo "=== Running ping to hostname ==="
             ping -c 4 $PORTAINER_HOST || echo "ping to hostname failed with exit code $?"
