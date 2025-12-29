@@ -85,13 +85,11 @@ jobs:
 
       - name: Debug secrets
         run: |
-          echo "Client ID length: ${#CF_ACCESS_CLIENT_ID}"
-          echo "Client Secret length: ${#CF_ACCESS_CLIENT_SECRET}"
           echo "Portainer token length: ${#PORTAINER_API_KEY}"
-          echo "Netbord Setup Key length: ${#NETBIRD_SETUP_KEY}"
+          echo "Netbird Setup Key length: ${#NETBIRD_SETUP_KEY}"
+          echo "GitHub Token length: ${#GITHUB_TOKEN}"
         env:
-          CF_ACCESS_CLIENT_ID: ${{ secrets.cloudflare_client_id }}
-          CF_ACCESS_CLIENT_SECRET: ${{ secrets.cloudflare_client_secret }}
+          GITHUB_TOKEN: ${{ secrets.gh_token }}
           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
           NETBIRD_SETUP_KEY: ${{ secrets.netbird_setup_key }}
 
