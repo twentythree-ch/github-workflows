@@ -211,13 +211,15 @@ jobs:
 
       - name: Create new stack
         if: steps.check-stack.outputs.exists == 'false'
+        env:
+           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
         run: |
           echo "📦 Creating new stack: ${{ steps.env.outputs.stack_name }}"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "${{ inputs.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ inputs.portainer_endpoint_id }}" \
-            -H "x-github-secret: ${{ secrets.github_secret }}" \
-            -H "Content-Type: application/json" \ \
+            -H "X-API-Key: $PORTAINER_API_KEY" \
+            -H "Content-Type: application/json" \
             -d "{
               \"name\": \"${{ steps.env.outputs.stack_name }}\",
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
