@@ -208,7 +208,7 @@ jobs:
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"composeFile\": \"${{ inputs.compose_file }}\",
-              \"env\": ${{ secrets.env_vars }},
+              \"env\": ${{ steps.prepare-env.outputs.env_vars }},
               \"repositoryAuthentication\": true,
               \"repositoryUsername\": \"${{ inputs.gh_username }}\",
               \"repositoryPassword\": \"${{ secrets.gh_token }}\"
@@ -237,7 +237,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
-              \"env\": ${{ secrets.env_vars }},
+              \"env\": ${{ steps.prepare-env.outputs.env_vars }},
               \"prune\": true,
               \"pullImage\": true
             }")
