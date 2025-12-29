@@ -116,9 +116,18 @@ jobs:
           hostname: 'github-action-runner'
           management-url: 'https://api.netbird.io'
 
+    #   - name: Configure DNS
+    #     if: steps.netbird.outputs.status == 'connected'
+    #     run: |
+    #       echo "=== Netbird connected, configuring DNS ==="
+    #       sudo resolvectl dns github-action-runner
+
+    #       PORTAINER_HOST=$(echo "${{ inputs.portainer_url }}" | awk -F[/:] '{print $4}')
+    #       echo "Portainer Host: $PORTAINER_HOST"
+
       - name: Network test
         id: network-test
-        if: inputs.run_network_test == 'true'
+        if: inputs.run_network_test == true
         run: | 
             echo "=== Starting network test ==="
 
