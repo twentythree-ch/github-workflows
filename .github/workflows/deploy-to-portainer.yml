@@ -41,6 +41,12 @@ on:
         required: true
         type: string
         description: 'Portainer endpoint ID (usually 1)'
+      
+      run_network_test:
+        required: false
+        type: boolean
+        default: false
+        description: 'Whether to run network connectivity test before deployment'
 
       gh_username:
         required: true
@@ -112,6 +118,7 @@ jobs:
 
       - name: Network test
         id: network-test
+        if: inputs.run_network_test == 'true'
         run: | 
             echo "=== Starting network test ==="
 
