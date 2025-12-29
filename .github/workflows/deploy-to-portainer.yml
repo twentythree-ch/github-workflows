@@ -149,7 +149,7 @@ jobs:
           echo "environment=$ENV" >> $GITHUB_OUTPUT
           echo "stack_name=$STACK_NAME" >> $GITHUB_OUTPUT
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
-          echo "deployment_url=${{ secrets.portainer_url }}/#/stacks" >> $GITHUB_OUTPUT
+          echo "deployment_url=${{ inputs.portainer_url }}/#/stacks" >> $GITHUB_OUTPUT
           
           echo "🚀 Deploying to: $ENV"
           echo "📦 Stack name: $STACK_NAME"
@@ -181,7 +181,7 @@ jobs:
           echo "🔍 Checking if stack '${{ steps.env.outputs.stack_name }}' exists..."
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-            "${{ secrets.portainer_url }}/api/stacks" \
+            "${{ inputs.portainer_url }}/api/stacks" \
             -H "X-API-Key: $PORTAINER_API_KEY")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -210,7 +210,7 @@ jobs:
           echo "📦 Creating new stack: ${{ steps.env.outputs.stack_name }}"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            "${{ secrets.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ secrets.portainer_endpoint_id }}" \
+            "${{ inputs.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ inputs.portainer_endpoint_id }}" \
             -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "Content-Type: application/json" \ \
             -d "{
@@ -240,7 +240,7 @@ jobs:
           echo "♻️  Updating stack: ${{ steps.env.outputs.stack_name }} (ID: ${{ steps.check-stack.outputs.stack_id }})"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
-            "${{ secrets.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ secrets.portainer_endpoint_id }}" \
+            "${{ inputs.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ inputs.portainer_endpoint_id }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \
             -d "{
@@ -281,7 +281,7 @@ jobs:
           
           # Get stack details
           curl -s -X GET \
-            "${{ secrets.portainer_url }}/api/stacks" \
+            "${{ inputs.portainer_url }}/api/stacks" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
             | jq '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
 
@@ -291,7 +291,7 @@ jobs:
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ Deployment to ${{ steps.env.outputs.environment }} succeeded!"
             echo ""
-            echo "🔗 View in Portainer: ${{ secrets.portainer_url }}/#/stacks"
+            echo "🔗 View in Portainer: ${{ inputs.portainer_url }}/#/stacks"
           else
             echo "❌ Deployment to ${{ steps.env.outputs.environment }} failed!"
             echo ""
