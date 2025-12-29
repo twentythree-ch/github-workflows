@@ -114,9 +114,6 @@ jobs:
             echo "=== Verifying hosts file entry ==="
             grep portainer.twentythree.ch /etc/hosts || echo "Entry not found in hosts file"
             
-            echo "=== Running nslookup ==="
-            nslookup portainer.twentythree.ch || echo "nslookup failed with exit code $?"
-            
             echo "=== Running ping to hostname ==="
             ping -c 4 portainer.twentythree.ch || echo "ping to hostname failed with exit code $?"
             
