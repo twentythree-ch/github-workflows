@@ -17,7 +17,6 @@ on:
       environment:
         type: string
         description: 'Which environment to run this on (development or production).'
-        required: true
         default: 'development'
 
       portainer_url:
