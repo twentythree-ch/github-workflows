@@ -108,14 +108,19 @@ jobs:
       - name: Network test
         id: network-test
         run: | 
+            echo "=== Starting network test ==="
+
+            PORTAINER_HOST=$(echo "${{ inputs.portainer_url }}" | awk -F[/:] '{print $4}')
+            echo "Portainer Host: $PORTAINER_HOST"
+
             echo "=== Adding entry to hosts file ==="
-            echo "192.168.11.2 portainer.twentythree.ch" | sudo tee -a /etc/hosts
+            echo "192.168.11.2  $PORTAINER_HOST" | sudo tee -a /etc/hosts
             
             echo "=== Verifying hosts file entry ==="
-            grep portainer-dev.twentythree.ch /etc/hosts || echo "Entry not found in hosts file"
+            grep $PORTAINER_HOST /etc/hosts || echo "Entry not found in hosts file"
             
             echo "=== Running ping to hostname ==="
-            ping -c 4 portainer-dev.twentythree.ch || echo "ping to hostname failed with exit code $?"
+            ping -c 4 $PORTAINER_HOST || echo "ping to hostname failed with exit code $?"
             
             echo "=== Running ping to IP ==="
             ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
