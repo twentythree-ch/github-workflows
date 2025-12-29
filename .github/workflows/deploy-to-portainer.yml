@@ -42,7 +42,7 @@ on:
         type: string
         description: 'Portainer endpoint ID (usually 1)'
 
-      github_username:
+      gh_username:
         required: true
         type: string
         description: 'GitHub username for repository authentication'
@@ -60,10 +60,10 @@ on:
         required: false
         description: 'JSON array of environment variables for the stack'
     
-      github_token:
+      gh_token:
         required: true
         description: 'GitHub token with access to the repository'
-        
+
     outputs:
       stack_name:
         description: 'Full stack name that was deployed'
@@ -225,8 +225,8 @@ jobs:
               \"composeFile\": \"${{ inputs.compose_file }}\",
               \"env\": ${{ steps.prepare-env.outputs.env_vars }},
               \"repositoryAuthentication\": true,
-              \"repositoryUsername\": \"${{ inputs.github_username }}\",
-              \"repositoryPassword\": \"${{ secrets.github_token }}\"
+              \"repositoryUsername\": \"${{ inputs.gh_username }}\",
+              \"repositoryPassword\": \"${{ secrets.gh_token }}\"
             }")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
