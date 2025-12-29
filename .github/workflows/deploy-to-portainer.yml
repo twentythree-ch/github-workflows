@@ -44,22 +44,10 @@ on:
       portainer_endpoint_id:
         required: true
         description: 'Portainer endpoint ID (usually 1)'
-      
-      cloudflare_client_id:
-        required: true
-        description: 'Cloudflare Client Id'
-
-      cloudflare_client_secret:
-        required: true
-        description: 'Cloudflare Client Secret'
 
       netbird_setup_key:
         required: true
         description: 'Netbord setup key to connect to netbird'
-
-      github_secret:
-        required: true
-        description: 'Secret to bypass cloudflare bot protection'
         
       env_vars_dev:
         required: false
@@ -204,15 +192,14 @@ jobs:
 
       - name: Check if stack exists
         id: check-stack
+        env:
+           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
         run: |
           echo "🔍 Checking if stack '${{ steps.env.outputs.stack_name }}' exists..."
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
-            -H "x-github-secret: ${{ secrets.github_secret }}" \
-            -H "X-API-Key: ${{ secrets.portainer_token }}" \
-            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}")
+            -H "X-API-Key: $PORTAINER_API_KEY")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           BODY=$(echo "$RESPONSE" | sed '$d')
@@ -242,10 +229,7 @@ jobs:
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "${{ secrets.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ secrets.portainer_endpoint_id }}" \
             -H "x-github-secret: ${{ secrets.github_secret }}" \
-            -H "X-API-Key: ${{ secrets.portainer_token }}" \
             -H "Content-Type: application/json" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
             -d "{
               \"name\": \"${{ steps.env.outputs.stack_name }}\",
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
@@ -274,11 +258,8 @@ jobs:
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
             "${{ secrets.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ secrets.portainer_endpoint_id }}" \
-            -H "x-github-secret: ${{ secrets.github_secret }}" \
             -H "X-API-Key: ${{ secrets.portainer_token }}" \
-            -H "Content-Type: application/json" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
+            -H "Content-Type: application/json" \
             -d "{
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"env\": ${{ steps.prepare-env.outputs.env_vars }},
@@ -318,10 +299,7 @@ jobs:
           # Get stack details
           curl -s -X GET \
             "${{ secrets.portainer_url }}/api/stacks" \
-            -H "x-github-secret: ${{ secrets.github_secret }}" \
-            -H "X-API-Key: ${{ secrets.portainer_token }}" \ \
-            -H "CF-Access-Client-Id: ${{ secrets.cloudflare_client_id }}" \
-            -H "CF-Access-Client-Secret: ${{ secrets.cloudflare_client_secret }}" \
+            -H "X-API-Key: ${{ secrets.portainer_token }}" \
             | jq '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
 
       - name: Deployment result
