@@ -112,16 +112,16 @@ jobs:
             echo "192.168.11.2 portainer.twentythree.ch" | sudo tee -a /etc/hosts
             
             echo "=== Verifying hosts file entry ==="
-            grep portainer.twentythree.ch /etc/hosts || echo "Entry not found in hosts file"
+            grep portainer-dev.twentythree.ch /etc/hosts || echo "Entry not found in hosts file"
             
             echo "=== Running ping to hostname ==="
-            ping -c 4 portainer.twentythree.ch || echo "ping to hostname failed with exit code $?"
+            ping -c 4 portainer-dev.twentythree.ch || echo "ping to hostname failed with exit code $?"
             
             echo "=== Running ping to IP ==="
             ping -c 4 192.168.11.2 || echo "ping to IP failed with exit code $?"
             
             echo "=== Running curl to Portainer URL ==="
-            curl -v https://portainer.twentythree.ch || echo "curl failed with exit code $?"
+            curl -v ${{ inputs.portainer_url }} || echo "curl failed with exit code $?"
 
             echo "=== Network test completed ==="
 
