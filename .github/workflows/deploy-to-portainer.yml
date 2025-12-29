@@ -11,7 +11,7 @@ on:
       compose_file:
         required: false
         type: string
-        default: 'docker-compose.yml'
+        default: 'docker/docker-compose.yml'
         description: 'Path to docker-compose file relative to repository root'
       
       environment:
@@ -42,6 +42,11 @@ on:
         type: string
         description: 'Portainer endpoint ID (usually 1)'
 
+      github_username:
+        required: true
+        type: string
+        description: 'GitHub username for repository authentication'
+
     secrets:
       portainer_token:
         required: true
@@ -51,14 +56,14 @@ on:
         required: true
         description: 'Netbird setup key to connect to netbird'
         
-      env_vars_dev:
+      env_vars:
         required: false
-        description: 'JSON array of environment variables for DEV'
-      
-      env_vars_prod:
-        required: false
-        description: 'JSON array of environment variables for PROD'
+        description: 'JSON array of environment variables for the stack'
     
+      github_token:
+        required: true
+        description: 'GitHub token with access to the repository'
+        
     outputs:
       stack_name:
         description: 'Full stack name that was deployed'
@@ -164,12 +169,7 @@ jobs:
         id: prepare-env
         run: |
           ENV=${{ steps.env.outputs.environment }}
-          
-          if [ "$ENV" == "prod" ]; then
-            ENV_VARS='${{ secrets.env_vars_prod }}'
-          else
-            ENV_VARS='${{ secrets.env_vars_dev }}'
-          fi
+          ENV_VARS='${{ secrets.env_vars }}'  
           
           # Handle empty or missing env vars
           if [ -z "$ENV_VARS" ] || [ "$ENV_VARS" == "null" ]; then
@@ -224,7 +224,9 @@ jobs:
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"composeFile\": \"${{ inputs.compose_file }}\",
               \"env\": ${{ steps.prepare-env.outputs.env_vars }},
-              \"repositoryAuthentication\": false
+              \"repositoryAuthentication\": true,
+              \"repositoryUsername\": \"${{ inputs.github_username }}\",
+              \"repositoryPassword\": \"${{ secrets.github_token }}\"
             }")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
