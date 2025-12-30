@@ -54,6 +54,7 @@ runs:
         uses: actions/checkout@v3
 
       - name: Debug secrets
+        shell: bash
         run: |
           echo "Portainer token length: ${#PORTAINER_API_KEY}"
           echo "Netbird Setup Key length: ${#NETBIRD_SETUP_KEY}"
@@ -65,7 +66,6 @@ runs:
           NETBIRD_SETUP_KEY: ${{ inputs.netbird_setup_key }}
           ENV_VARS: ${{ inputs.env_vars }}
 
-
       - name: Netbird Connect
         id: netbird
         uses: Alemiz112/netbird-connect@v1
@@ -76,6 +76,7 @@ runs:
 
       - name: Network test
         id: network-test
+        shell: bash
         if: inputs.run_network_test == true
         run: | 
             echo "=== Starting network test ==="
@@ -102,6 +103,7 @@ runs:
 
       - name: Determine environment
         id: env
+        shell: bash
         run: |
           # Determine environment from input or branch
           ENV="${{ inputs.environment }}"
@@ -123,6 +125,7 @@ runs:
 
       - name: Prepare environment variables
         id: prepare-env
+        shell: bash
         run: |
           ENV_VARS='${{ inputs.env_vars }}'  
           
@@ -135,6 +138,7 @@ runs:
 
       - name: Check if stack exists
         id: check-stack
+        shell: bash
         env:
            PORTAINER_API_KEY: ${{ inputs.portainer_token }}
         run: |
@@ -166,6 +170,7 @@ runs:
 
       - name: Create new stack
         if: steps.check-stack.outputs.exists == 'false'
+        shell: bash
         env:
            PORTAINER_API_KEY: ${{ inputs.portainer_token }}
         run: |
@@ -200,6 +205,7 @@ runs:
 
       - name: Update existing stack
         if: steps.check-stack.outputs.exists == 'true'
+        shell: bash
         run: |
           echo "♻️  Updating stack: ${{ inputs.stack_name }} (ID: ${{ steps.check-stack.outputs.stack_id }})"
           
@@ -227,11 +233,13 @@ runs:
           fi
 
       - name: Wait for deployment
+        shell: bash
         run: |
           echo "⏳ Waiting 10 seconds for deployment to stabilize..."
           sleep 10
 
       - name: Verify deployment
+        shell: bash
         run: |
           echo "📊 Deployment Summary:"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -250,6 +258,7 @@ runs:
             | jq '.[] | select(.Name=="${{ inputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
 
       - name: Deployment result
+        shell: bash
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
@@ -257,7 +266,7 @@ runs:
             echo ""
             echo "🔗 View in Portainer: ${{ inputs.portainer_url }}/#/stacks"
           else
-            echo "❌ Deployment to ${{ sinputs.environment }} failed!"
+            echo "❌ Deployment to ${{ inputs.environment }} failed!"
             echo ""
             echo "Check logs above for details"
             exit 1
