@@ -20,6 +20,14 @@ inputs:
     portainer_url:
         description: Portainer URL
         required: true
+    
+    portainer_endpoint_id:
+        description: Portainer Endpoint ID
+        required: true
+
+    portainer_token:
+        description: Portainer API token
+        required: true
 
     run_network_test:
         required: false
@@ -31,10 +39,7 @@ inputs:
         required: true
         type: string
         description: 'GitHub username for repository authentication'
-
-secrets:
-    portainer_token:
-        description: Portainer API token
+   
     gh_token:
         description: GitHub token with repo access
     netbird_setup_key:
@@ -55,17 +60,17 @@ runs:
           echo "GitHub Token length: ${#GITHUB_TOKEN}"
           echo "Env Vars length: ${#ENV_VARS}"
         env:
-          GITHUB_TOKEN: ${{ secrets.gh_token }}
-          PORTAINER_API_KEY: ${{ secrets.portainer_token }}
-          NETBIRD_SETUP_KEY: ${{ secrets.netbird_setup_key }}
-          ENV_VARS: ${{ secrets.env_vars }}
+          GITHUB_TOKEN: ${{ inputs.gh_token }}
+          PORTAINER_API_KEY: ${{ inputs.portainer_token }}
+          NETBIRD_SETUP_KEY: ${{ inputs.netbird_setup_key }}
+          ENV_VARS: ${{ inputs.env_vars }}
 
 
       - name: Netbird Connect
         id: netbird
         uses: Alemiz112/netbird-connect@v1
         with:
-          setup-key: ${{ secrets.netbird_setup_key }}
+          setup-key: ${{ inputs.netbird_setup_key }}
           hostname: 'github-action-runner'
           management-url: 'https://api.netbird.io'
 
@@ -119,7 +124,7 @@ runs:
       - name: Prepare environment variables
         id: prepare-env
         run: |
-          ENV_VARS='${{ secrets.env_vars }}'  
+          ENV_VARS='${{ inputs.env_vars }}'  
           
           # Handle empty or missing env vars
           if [ -z "$ENV_VARS" ] || [ "$ENV_VARS" == "null" ]; then
@@ -131,9 +136,9 @@ runs:
       - name: Check if stack exists
         id: check-stack
         env:
-           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
+           PORTAINER_API_KEY: ${{ inputs.portainer_token }}
         run: |
-          echo "🔍 Checking if stack '${{ steps.env.outputs.stack_name }}' exists..."
+          echo "🔍 Checking if stack '${{ inputs.stack_name }}' exists..."
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             "${{ inputs.portainer_url }}/api/stacks" \
@@ -148,7 +153,7 @@ runs:
             exit 1
           fi
           
-          STACK_ID=$(echo "$BODY" | jq -r '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | .Id')
+          STACK_ID=$(echo "$BODY" | jq -r '.[] | select(.Name=="${{ inputs.stack_name }}") | .Id')
           
           if [ -z "$STACK_ID" ] || [ "$STACK_ID" == "null" ]; then
             echo "exists=false" >> $GITHUB_OUTPUT
@@ -162,23 +167,23 @@ runs:
       - name: Create new stack
         if: steps.check-stack.outputs.exists == 'false'
         env:
-           PORTAINER_API_KEY: ${{ secrets.portainer_token }}
+           PORTAINER_API_KEY: ${{ inputs.portainer_token }}
         run: |
-          echo "📦 Creating new stack: ${{ steps.env.outputs.stack_name }}"
+          echo "📦 Creating new stack: ${{ inputs.stack_name }}"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             "${{ inputs.portainer_url }}/api/stacks/create/standalone/repository?endpointId=${{ inputs.portainer_endpoint_id }}" \
             -H "X-API-Key: $PORTAINER_API_KEY" \
             -H "Content-Type: application/json" \
             -d "{
-              \"name\": \"${{ steps.env.outputs.stack_name }}\",
+              \"name\": \"${{ inputs.stack_name }}\",
               \"repositoryURL\": \"${{ github.server_url }}/${{ github.repository }}\",
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
               \"composeFile\": \"${{ inputs.compose_file }}\",
               \"env\": ${{ steps.prepare-env.outputs.env_vars }},
               \"repositoryAuthentication\": true,
               \"repositoryUsername\": \"${{ inputs.gh_username }}\",
-              \"repositoryPassword\": \"${{ secrets.gh_token }}\"
+              \"repositoryPassword\": \"${{ inputs.gh_token }}\"
             }")
           
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -196,11 +201,11 @@ runs:
       - name: Update existing stack
         if: steps.check-stack.outputs.exists == 'true'
         run: |
-          echo "♻️  Updating stack: ${{ steps.env.outputs.stack_name }} (ID: ${{ steps.check-stack.outputs.stack_id }})"
+          echo "♻️  Updating stack: ${{ inputs.stack_name }} (ID: ${{ steps.check-stack.outputs.stack_id }})"
           
           RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT \
             "${{ inputs.portainer_url }}/api/stacks/${{ steps.check-stack.outputs.stack_id }}/git/redeploy?endpointId=${{ inputs.portainer_endpoint_id }}" \
-            -H "X-API-Key: ${{ secrets.portainer_token }}" \
+            -H "X-API-Key: ${{ inputs.portainer_token }}" \
             -H "Content-Type: application/json" \
             -d "{
               \"repositoryReferenceName\": \"refs/heads/${{ steps.env.outputs.branch }}\",
@@ -241,18 +246,18 @@ runs:
           # Get stack details
           curl -s -X GET \
             "${{ inputs.portainer_url }}/api/stacks" \
-            -H "X-API-Key: ${{ secrets.portainer_token }}" \
-            | jq '.[] | select(.Name=="${{ steps.env.outputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
+            -H "X-API-Key: ${{ inputs.portainer_token }}" \
+            | jq '.[] | select(.Name=="${{ inputs.stack_name }}") | {Name, Status, CreationDate, UpdateDate}'
 
       - name: Deployment result
         if: always()
         run: |
           if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ Deployment to ${{ steps.env.outputs.environment }} succeeded!"
+            echo "✅ Deployment to ${{ inputs.environment }} succeeded!"
             echo ""
             echo "🔗 View in Portainer: ${{ inputs.portainer_url }}/#/stacks"
           else
-            echo "❌ Deployment to ${{ steps.env.outputs.environment }} failed!"
+            echo "❌ Deployment to ${{ sinputs.environment }} failed!"
             echo ""
             echo "Check logs above for details"
             exit 1
